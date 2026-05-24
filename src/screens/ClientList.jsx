@@ -122,8 +122,9 @@ export default function ClientList() {
 
   return (
     <div className="ox-screen">
+     <div className="ox-body ox-scroll">
       {/* header */}
-      <div style={{ padding: '18px 18px 12px', flexShrink: 0 }}>
+      <div style={{ padding: '18px 18px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div
             className="ox-tap"
@@ -187,7 +188,7 @@ export default function ClientList() {
       </div>
 
       {/* Upcoming Events Section */}
-      <div style={{ padding: '0 18px', flexShrink: 0 }}>
+      <div style={{ padding: '0 18px' }}>
         <div style={{
           background: 'linear-gradient(135deg, rgba(20,20,20,0.9) 0%, rgba(28,28,28,0.95) 100%)',
           border: '1px solid var(--ox-line)',
@@ -296,9 +297,9 @@ export default function ClientList() {
                       <div className="ox-thai" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ox-fg)' }}>
                         {appt.clientName}
                       </div>
-                      {appt.label && (
+                      {(appt.routine || appt.label) && (
                         <div className="ox-thai ox-trunc" style={{ fontSize: 11, color: 'var(--ox-muted)' }}>
-                          {appt.label}
+                          {[appt.routine, appt.label].filter(Boolean).join(' · ')}
                         </div>
                       )}
                     </div>
@@ -311,7 +312,7 @@ export default function ClientList() {
       </div>
 
       {/* tabs */}
-      <div style={{ padding: '0 18px', marginTop: 12, flexShrink: 0 }}>
+      <div style={{ padding: '0 18px', marginTop: 12 }}>
         <div style={{ display: 'flex', borderBottom: '1px solid var(--ox-line)' }}>
           {TABS.map((t) => {
             const on = t.id === tab
@@ -343,7 +344,7 @@ export default function ClientList() {
       </div>
 
       {/* list */}
-      <div className="ox-body ox-scroll" style={{ padding: '4px 18px 96px' }}>
+      <div style={{ padding: '4px 18px 96px' }}>
         {trainees.length === 0 ? (
           <EmptyState
             icon="👥"
@@ -395,6 +396,7 @@ export default function ClientList() {
           </>
         )}
       </div>
+     </div>
 
       <Fab label="NEW TRAINEE" onClick={() => setSheet({ mode: 'new' })} />
       <BottomNav active="clients" />

@@ -13,6 +13,7 @@ import { Field } from '../components/Field'
 import BottomNav from '../components/BottomNav'
 import { Loader, ErrorState, BusyOverlay } from '../components/Feedback'
 import { useDialog } from '../components/Dialog'
+import { ROUTINES } from '../lib/routines'
 
 const pad2 = (n) => String(n).padStart(2, '0')
 const SLOTS = Array.from({ length: 15 }, (_, i) => `${pad2(i + 8)}:00`) // 08:00–22:00
@@ -173,7 +174,7 @@ export default function Appointments() {
                     >
                       {appt.clientName}
                     </div>
-                    {appt.label && (
+                    {(appt.routine || appt.label) && (
                       <div
                         className="ox-thai ox-trunc"
                         style={{
@@ -181,7 +182,7 @@ export default function Appointments() {
                           color: isNow ? 'rgba(255,255,255,0.78)' : 'var(--ox-muted)',
                         }}
                       >
-                        {appt.label}
+                        {[appt.routine, appt.label].filter(Boolean).join(' · ')}
                       </div>
                     )}
                   </div>
@@ -240,6 +241,7 @@ function AppointmentSheet({ date, trainees, takenTimes, presetTime, onClose, onS
   )
   const [who, setWho] = useState(trainees[0]?.id || 'custom')
   const [customName, setCustomName] = useState('')
+  const [routine, setRoutine] = useState('')
   const [label, setLabel] = useState('')
 
   const isCustom = who === 'custom'
@@ -254,6 +256,7 @@ function AppointmentSheet({ date, trainees, takenTimes, presetTime, onClose, onS
       time,
       traineeId: trainee ? trainee.id : null,
       clientName,
+      routine,
       label: label.trim(),
     })
   }
@@ -301,6 +304,20 @@ function AppointmentSheet({ date, trainees, takenTimes, presetTime, onClose, onS
             />
           </Field>
         )}
+        <Field label="กลุ่มกล้ามเนื้อ / ส่วนที่เทรน">
+          <select
+            className="ox-field"
+            value={routine}
+            onChange={(e) => setRoutine(e.target.value)}
+            style={{ colorScheme: 'dark' }}
+          >
+            {ROUTINES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </Field>
         <Field label="รายละเอียด (ไม่บังคับ)">
           <input
             className="ox-field"

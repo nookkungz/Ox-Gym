@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Deployment
+
+| Target | URL |
+|--------|-----|
+| **Production** | https://final-ox-gym.vercel.app |
+| **GitHub** | https://github.com/nookkungz/Ox-Gym |
+| **Vercel project** | `final-ox-gym` (org: `nookkung321-4231s-projects`) |
+
+Deploy with `vercel --prod` from the project root (Vercel CLI must be authenticated).
+
 ## Commands
 
 ```bash
@@ -57,14 +67,49 @@ with `<Loader/>` / `<ErrorState/>`, then render `data`. After a mutation, call
 `reload()`.
 
 ### Key data shapes
+
+- **Coach** (`ox5_coaches`): `{ name, romanized, photo, createdAt }`
+  where `photo` is a base64 JPEG data URL (nullable). Edited via `CoachSheet`
+  inside `CoachSelect`.
+
+- **Trainee** (`ox5_trainees`):
+  `{ coachId, name, romanized, photo, age, weight, height, phone, goal,
+  status: 'active'|'paused', sessionCount, lastWorkoutDate, createdAt }`
+  where `photo` is a base64 JPEG data URL (nullable). Edited via `TraineeSheet`
+  (used by both `ClientList` and `ClientProfile`).
+
 - **Workout** (`ox5_workouts`): `{ traineeId, date, note, exercises: [...] }`
   where each exercise is `{ name, type: 'weight'|'cardio', sets: [{reps,weight}],
   duration }`. The two-level `exercises[] → sets[]` nesting is the core model —
   a workout has many exercises, a weight exercise has many sets.
+
 - **Check-in** (`ox5_checkins`): one record holds both a progress photo and body
   measurements — `{ traineeId, date, photo, measurements: {arm,chest,waist,hips,leg} }`.
   Photo and measurements are always captured together.
+
+- **Shared training plan** (`ox5_shared_plan/main`): a single document shared by
+  all coach profiles — `{ datePlans: { 'YYYY-MM-DD': 'routine string', ... } }`.
+  Read with `api.getSharedPlan()` → returns the `datePlans` map directly.
+  Written with `api.updateSharedPlan(datePlans)` (uses `setDoc` with `merge:true`,
+  so the document is created automatically on first save). **Do not store
+  `datePlans` inside coach docs** — those are no longer used for the planner.
+
 - Dates are stored as ISO `YYYY-MM-DD` strings throughout.
+
+### Profile photos
+Both coach and trainee profiles support a profile photo stored as a base64 JPEG
+string inside the Firestore document.
+
+- **Avatar dimensions**: compressed to max **400 px** wide at **82% JPEG quality**
+  via `compressImage(file, 400, 0.82)` — keeps avatar docs small (~30–80 KB).
+- **Check-in / progress photos**: compressed to max **900 px** wide at **72% quality**
+  (the default `compressImage` call) — larger but still within Firestore's 1 MB
+  document limit.
+- The `Avatar` component (`src/components/Avatar.jsx`) renders either a `photo`
+  (as an `<img>`) or a coloured initials tile. Always pass `photo={x.photo || null}`.
+- Photo upload UI (camera overlay on avatar → hidden `<input type="file">`) is
+  implemented identically in `CoachSheet` (inside `CoachSelect.jsx`) and
+  `TraineeSheet` (`src/components/TraineeSheet.jsx`).
 
 ### Global state
 `AppContext` (`useApp()` → `{ coachId, setCoachId }`) holds the selected coach,
@@ -93,10 +138,26 @@ the upper marks.
 UI is Thai-primary with English captions. `src/lib/thai.js` provides
 Buddhist-calendar conversion (BE year = CE + 543), Thai month/day names, and ISO
 date helpers. Images are stored as base64 JPEG strings inside Firestore docs
-(`compressImage` in `src/lib/image.js`, ~900px / 72% quality); the before/after
-export composites them on a `<canvas>` in `src/lib/export.js`.
+(`compressImage` in `src/lib/image.js`); the before/after export composites them
+on a `<canvas>` in `src/lib/export.js`.
 
 ### `src/` layout
-`screens/` — one component per route (numbered 01–10 in header comments).
+`screens/` — one component per route (numbered 01–11 in header comments).
 `components/` — reusable UI kit. `lib/` — framework-free logic (api, dates,
 images, hooks). `store/` — React context.
+
+### Screen index
+
+| # | File | Route | Description |
+|---|------|-------|-------------|
+| 01 | `CoachSelect.jsx` | `/` | Coach profile picker; create/edit coaches with photo upload |
+| 02 | `ClientList.jsx` | `/clients` | Trainee roster with search, status tabs, today's plan widget |
+| 03 | `ClientProfile.jsx` | `/client/:id` | Trainee overview: stats, quick actions, recent workouts |
+| 04 | `WorkoutLog.jsx` | `/client/:id/workout/new` · `/client/:id/workout/:workoutId` | Create/edit a workout session |
+| 05 | `WorkoutHistory.jsx` | `/client/:id/history` | Full workout history list |
+| 06 | `Measurements.jsx` | `/client/:id/measurements` | Body measurement chart & history |
+| 07 | `PhotoGallery.jsx` | `/client/:id/photos` | Progress photo grid |
+| 08 | `BeforeAfter.jsx` | `/client/:id/before-after` | Before/after export compositor |
+| 09 | `Calendar.jsx` | `/calendar` | Monthly appointment calendar |
+| 10 | `Appointments.jsx` | `/calendar/:date` | Day-level appointment list |
+| 11 | `Planner.jsx` | `/plan` | Monthly personal training planner (shared across all coach profiles) |

@@ -75,7 +75,7 @@ export default function Planner() {
     setData({ datePlans: updated })
 
     try {
-      await api.updateSharedPlan(updated)
+      await api.updateSharedPlanDay(isoDate, value)
     } catch (err) {
       await dialog.alert('บันทึกข้อมูลไม่สำเร็จ: ' + err.message)
       reload()

@@ -51,6 +51,26 @@ export async function getSharedPlan() {
 export function updateSharedPlan(datePlans) {
   return setDoc(doc(db, PLAN_COL, PLAN_ID), { datePlans }, { merge: true })
 }
+// Dotted-path single-day update. Prevents collaborative data loss: concurrent
+// edits to different days merge instead of overwriting the whole map.
+export async function updateSharedPlanDay(isoDate, value) {
+  const docRef = doc(db, PLAN_COL, PLAN_ID)
+  try {
+    await updateDoc(docRef, {
+      [`datePlans.${isoDate}`]: value,
+    })
+  } catch (err) {
+    if (err.code === 'not-found') {
+      await setDoc(docRef, {
+        datePlans: {
+          [isoDate]: value,
+        },
+      })
+    } else {
+      throw err
+    }
+  }
+}
 
 // ─── Trainees ─────────────────────────────────────────────────
 export async function listAllTrainees() {
